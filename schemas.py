@@ -1,8 +1,10 @@
-from datetime import date
+from datetime import date, datetime
 from pydantic import BaseModel, Field
 
 
+# -------------------------
 # Place
+# -------------------------
 
 class PlaceCreate(BaseModel):
     city: str = Field(min_length=1)
@@ -26,7 +28,9 @@ class PlaceOut(BaseModel):
         from_attributes = True
 
 
-# Trip 
+# -------------------------
+# Trip
+# -------------------------
 
 class TripCreate(BaseModel):
     name: str = Field(min_length=1)
@@ -50,7 +54,9 @@ class TripOut(BaseModel):
         from_attributes = True
 
 
-# TripPlace (Itinerary items)
+# -------------------------
+# TripPlace
+# -------------------------
 
 class TripPlaceCreate(BaseModel):
     place_id: int
@@ -72,6 +78,46 @@ class TripPlaceOut(BaseModel):
     day: int | None
     planned_order: int | None
     note: str | None
+
+    class Config:
+        from_attributes = True
+
+
+# -------------------------
+# Bookmark
+# -------------------------
+
+class BookmarkCreate(BaseModel):
+    user_name: str = Field(min_length=1)
+
+
+class BookmarkOut(BaseModel):
+    id: int
+    place_id: int
+    user_name: str
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+# -------------------------
+# Review
+# -------------------------
+
+class ReviewCreate(BaseModel):
+    user_name: str = Field(min_length=1)
+    rating: int = Field(ge=1, le=5)
+    comment: str | None = None
+
+
+class ReviewOut(BaseModel):
+    id: int
+    place_id: int
+    user_name: str
+    rating: int
+    comment: str | None
+    created_at: datetime
 
     class Config:
         from_attributes = True
