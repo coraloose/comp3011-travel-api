@@ -121,3 +121,44 @@ class ReviewOut(BaseModel):
 
     class Config:
         from_attributes = True
+
+
+# -------------------------
+# Expense
+# -------------------------
+
+class ExpenseCreate(BaseModel):
+    category: str = Field(min_length=1)
+    amount: float = Field(gt=0)
+    currency: str = Field(default="EUR", min_length=1)
+    date: date
+    note: str | None = None
+
+
+class ExpenseOut(BaseModel):
+    id: int
+    trip_id: int
+    category: str
+    amount: float
+    currency: str
+    date: date
+    note: str | None
+
+    class Config:
+        from_attributes = True
+
+
+# -------------------------
+# Budget Summary
+# -------------------------
+
+class BudgetCategoryOut(BaseModel):
+    category: str
+    total: float
+
+
+class BudgetSummaryOut(BaseModel):
+    trip_id: int
+    currency: str
+    total: float
+    by_category: list[BudgetCategoryOut]

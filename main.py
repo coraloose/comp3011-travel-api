@@ -1,15 +1,18 @@
 from fastapi import FastAPI, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
-
+from sqlalchemy import func
+from datetime import date
 from db import SessionLocal, engine, Base
-from models import Place, Trip, TripPlace, Bookmark, Review
+from models import Place, Trip, TripPlace, Bookmark, Review, Expense
 from schemas import (
     PlaceCreate, PlaceUpdate, PlaceOut,
     TripCreate, TripUpdate, TripOut,
     TripPlaceCreate, TripPlaceUpdate, TripPlaceOut,
     BookmarkCreate, BookmarkOut,
-    ReviewCreate, ReviewOut
+    ReviewCreate, ReviewOut,
+    ExpenseCreate, ExpenseOut,
+    BudgetSummaryOut, BudgetCategoryOut,
 )
 
 app = FastAPI(title="Travel Planner API")
@@ -305,3 +308,74 @@ def list_reviews(place_id: int, db: Session = Depends(get_db)):
         .order_by(Review.id.desc())
         .all()
     )
+
+
+# =========================
+# Expense
+# =========================
+
+@app.post("/trips/{trip_id}/expenses", response_model=ExpenseOut, status_code=status.HTTP_201_CREATED)
+def create_expense(trip_id: int, payload: ExpenseCreate, db: Session = Depends(get_db)):
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    expense = Expense(trip_id=trip_id, **payload.model_dump())
+    db.add(expense)
+    db.commit()
+    db.refresh(expense)
+    return expense
+
+
+@app.get("/trips/{trip_id}/expenses", response_model=list[ExpenseOut])
+def list_expenses(
+    trip_id: int,
+    category: str | None = None,
+    date_from: date | None = None,
+    date_to: date | None = None,
+    db: Session = Depends(get_db),
+):
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    q = db.query(Expense).filter(Expense.trip_id == trip_id)
+
+    if category:
+        q = q.filter(Expense.category == category)
+
+    # Optional date filtering; keep it simple for coursework.
+    if date_from:
+        q = q.filter(Expense.date >= date_from)
+    if date_to:
+        q = q.filter(Expense.date <= date_to)
+
+    return q.order_by(Expense.date.desc(), Expense.id.desc()).all()
+
+
+# =========================
+# Analytics: Budget Summary
+# =========================
+
+@app.get("/analytics/trips/{trip_id}/budget-summary", response_model=BudgetSummaryOut)
+def budget_summary(trip_id: int, currency: str = "EUR", db: Session = Depends(get_db)):
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    # Aggregate by category.
+    rows = (
+        db.query(
+            Expense.category.label("category"),
+            func.coalesce(func.sum(Expense.amount), 0.0).label("total"),
+        )
+        .filter(Expense.trip_id == trip_id, Expense.currency == currency)
+        .group_by(Expense.category)
+        .order_by(func.sum(Expense.amount).desc())
+        .all()
+    )
+
+    by_category = [BudgetCategoryOut(category=r.category, total=float(r.total)) for r in rows]
+    total = sum(x.total for x in by_category)
+
+    return BudgetSummaryOut(trip_id=trip_id, currency=currency, total=float(total), by_category=by_category)

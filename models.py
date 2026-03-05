@@ -1,6 +1,5 @@
 from datetime import datetime
-
-from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, UniqueConstraint, Float
 from db import Base
 
 
@@ -61,3 +60,18 @@ class Review(Base):
     rating = Column(Integer, nullable=False)
     comment = Column(String, nullable=True)
     created_at = Column(DateTime, nullable=False, default=datetime.utcnow)
+
+
+class Expense(Base):
+    """Trip-level expense record for budget analysis."""
+    __tablename__ = "expenses"
+
+    id = Column(Integer, primary_key=True, index=True)
+    trip_id = Column(Integer, ForeignKey("trips.id"), nullable=False, index=True)
+
+    category = Column(String, nullable=False, index=True)  # e.g., food/transport/ticket/hotel/other
+    amount = Column(Float, nullable=False)
+    currency = Column(String, nullable=False, default="EUR", index=True)
+
+    date = Column(Date, nullable=False, index=True)
+    note = Column(String, nullable=True)
