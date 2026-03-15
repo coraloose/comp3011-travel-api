@@ -162,3 +162,21 @@ class BudgetSummaryOut(BaseModel):
     currency: str
     total: float
     by_category: list[BudgetCategoryOut]
+
+
+# -------------------------
+# Analytics
+# -------------------------
+
+class PlaceRankOut(BaseModel):
+    place_id: int
+    city: str
+    name: str
+    category: str
+    value: float  
+    count: int | None = None  
+
+
+class ItineraryGenerateOut(BaseModel):
+    trip_id: int
+    updated_items: int

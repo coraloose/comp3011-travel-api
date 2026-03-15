@@ -13,6 +13,7 @@ from schemas import (
     ReviewCreate, ReviewOut,
     ExpenseCreate, ExpenseOut,
     BudgetSummaryOut, BudgetCategoryOut,
+    PlaceRankOut, ItineraryGenerateOut
 )
 
 app = FastAPI(title="Travel Planner API")
@@ -344,7 +345,6 @@ def list_expenses(
     if category:
         q = q.filter(Expense.category == category)
 
-    # Optional date filtering; keep it simple for coursework.
     if date_from:
         q = q.filter(Expense.date >= date_from)
     if date_to:
@@ -379,3 +379,111 @@ def budget_summary(trip_id: int, currency: str = "EUR", db: Session = Depends(ge
     total = sum(x.total for x in by_category)
 
     return BudgetSummaryOut(trip_id=trip_id, currency=currency, total=float(total), by_category=by_category)
+
+
+# =========================
+# Analytics: City Rankings
+# =========================
+
+@app.get("/analytics/cities/{city}/top-bookmarked", response_model=list[PlaceRankOut])
+def top_bookmarked(city: str, limit: int = 10, db: Session = Depends(get_db)):
+    rows = (
+        db.query(
+            Place.id.label("place_id"),
+            Place.city.label("city"),
+            Place.name.label("name"),
+            Place.category.label("category"),
+            func.count(Bookmark.id).label("bookmark_count"),
+        )
+        .join(Bookmark, Bookmark.place_id == Place.id)
+        .filter(Place.city == city)
+        .group_by(Place.id, Place.city, Place.name, Place.category)
+        .order_by(func.count(Bookmark.id).desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        PlaceRankOut(
+            place_id=r.place_id,
+            city=r.city,
+            name=r.name,
+            category=r.category,
+            value=float(r.bookmark_count),
+            count=None,
+        )
+        for r in rows
+    ]
+
+
+@app.get("/analytics/cities/{city}/top-rated", response_model=list[PlaceRankOut])
+def top_rated(city: str, limit: int = 10, min_reviews: int = 3, db: Session = Depends(get_db)):
+    rows = (
+        db.query(
+            Place.id.label("place_id"),
+            Place.city.label("city"),
+            Place.name.label("name"),
+            Place.category.label("category"),
+            func.avg(Review.rating).label("avg_rating"),
+            func.count(Review.id).label("review_count"),
+        )
+        .join(Review, Review.place_id == Place.id)
+        .filter(Place.city == city)
+        .group_by(Place.id, Place.city, Place.name, Place.category)
+        .having(func.count(Review.id) >= min_reviews)
+        .order_by(func.avg(Review.rating).desc(), func.count(Review.id).desc())
+        .limit(limit)
+        .all()
+    )
+
+    return [
+        PlaceRankOut(
+            place_id=r.place_id,
+            city=r.city,
+            name=r.name,
+            category=r.category,
+            value=float(r.avg_rating),
+            count=int(r.review_count),
+        )
+        for r in rows
+    ]
+
+
+# =========================
+# Analytics: Itinerary Generator
+# =========================
+
+@app.post("/analytics/trips/{trip_id}/generate-itinerary", response_model=ItineraryGenerateOut)
+def generate_itinerary(trip_id: int, db: Session = Depends(get_db)):
+    trip = db.query(Trip).filter(Trip.id == trip_id).first()
+    if not trip:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    # Determine trip duration.
+    num_days = (trip.end_date - trip.start_date).days + 1
+    if num_days <= 0:
+        raise HTTPException(status_code=400, detail="Invalid trip date range")
+
+    # Select items without assigned day.
+    items = (
+        db.query(TripPlace)
+        .filter(TripPlace.trip_id == trip_id, TripPlace.day.is_(None))
+        .order_by(TripPlace.id.asc())
+        .all()
+    )
+
+    if not items:
+        return ItineraryGenerateOut(trip_id=trip_id, updated_items=0)
+
+    # Simple round-robin assignment across days.
+    updated = 0
+    for idx, item in enumerate(items):
+        day = (idx % num_days) + 1
+        item.day = day
+        # If planned_order is missing, assign sequential order within that day.
+        if item.planned_order is None:
+            item.planned_order = 1
+        updated += 1
+
+    db.commit()
+    return ItineraryGenerateOut(trip_id=trip_id, updated_items=updated)
