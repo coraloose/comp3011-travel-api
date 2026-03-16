@@ -20,6 +20,7 @@ The system supports:
 ### 1) Create a virtual environment
 ```powershell
 py -3.12 -m venv .venv
+```
 
 2) Activate the virtual environment
 ```powershell
