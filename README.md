@@ -39,75 +39,69 @@ python -m uvicorn main:app --reload
 ```
 
 ### 5) Open API documentation (Swagger UI)
-Swagger UI: http://127.0.0.1:8000/docs
-Health check: http://127.0.0.1:8000/health
+- Swagger UI: http://127.0.0.1:8000/docs  
+- Health check: http://127.0.0.1:8000/health
 
 ## Database
-Database: SQLite
-File: travel.db (created/updated automatically when the server starts)
-Tables are created automatically (prototype approach using SQLAlchemy create_all).
+- Database: SQLite
+- File: `travel.db` (created/updated automatically when the server starts)
+- Tables are created automatically (prototype approach using SQLAlchemy `create_all`).
 
 ## Key Endpoints
-Health
-GET /health
-Returns { "status": "ok" } when the server is running.
+
+### Health
+- `GET /health` — Returns `{ "status": "ok" }`
 
 ### Places (CRUD)
-POST /places
-GET /places
-GET /places/{place_id}
-PUT /places/{place_id}
-DELETE /places/{place_id}
+- `POST /places`
+- `GET /places`
+- `GET /places/{place_id}`
+- `PUT /places/{place_id}`
+- `DELETE /places/{place_id}`
 
 ### Trips (CRUD)
-POST /trips
-GET /trips
-GET /trips/{trip_id}
-PUT /trips/{trip_id}
-DELETE /trips/{trip_id}
+- `POST /trips`
+- `GET /trips`
+- `GET /trips/{trip_id}`
+- `PUT /trips/{trip_id}`
+- `DELETE /trips/{trip_id}`
 
 ### Itinerary (TripPlace)
-POST /trips/{trip_id}/places
-Add a place to a trip (optionally set day and planned_order).
-GET /trips/{trip_id}/places
-List itinerary items for a trip.
-PATCH /trips/{trip_id}/places/{trip_place_id}
-Update an itinerary item (e.g., day, planned_order, note).
-DELETE /trips/{trip_id}/places/{trip_place_id}
+- `POST /trips/{trip_id}/places` — Add a place to a trip
+- `GET /trips/{trip_id}/places` — List itinerary items
+- `PATCH /trips/{trip_id}/places/{trip_place_id}` — Update an itinerary item
+- `DELETE /trips/{trip_id}/places/{trip_place_id}`
 
 ### Bookmarks
-POST /places/{place_id}/bookmark
-DELETE /places/{place_id}/bookmark?user_name=...
-Note: duplicate bookmarks for the same user_name and place_id return 409 Conflict.
+- `POST /places/{place_id}/bookmark`
+- `DELETE /places/{place_id}/bookmark?user_name=...` — Duplicate bookmarks return **409**
 
 ### Reviews
-POST /places/{place_id}/reviews
-GET /places/{place_id}/reviews
-Note: ratings are validated to be within 1–5.
+- `POST /places/{place_id}/reviews`
+- `GET /places/{place_id}/reviews` — Ratings validated within **1–5**
 
 ### Expenses
-POST /trips/{trip_id}/expenses
-GET /trips/{trip_id}/expenses
-Optional filters may include category, date_from, date_to.
+- `POST /trips/{trip_id}/expenses`
+- `GET /trips/{trip_id}/expenses` — Optional filters: `category`, `date_from`, `date_to`
 
 ### Analytics
-GET /analytics/trips/{trip_id}/budget-summary?currency=EUR
-Returns expense totals grouped by category and a grand total.
-GET /analytics/cities/{city}/top-bookmarked?limit=10
-Returns the most bookmarked places within a city.
-GET /analytics/cities/{city}/top-rated?limit=10&min_reviews=3
-Returns the highest rated places within a city (with a minimum review count).
-POST /analytics/trips/{trip_id}/generate-itinerary
-Assigns day values for itinerary items that have day = null using a simple round-robin strategy.
+- `GET /analytics/trips/{trip_id}/budget-summary?currency=EUR`
+- `GET /analytics/cities/{city}/top-bookmarked?limit=10`
+- `GET /analytics/cities/{city}/top-rated?limit=10&min_reviews=3`
+- `POST /analytics/trips/{trip_id}/generate-itinerary`
 
 ## Error Handling (Examples)
-404 Not Found: place/trip/itinerary item does not exist
-409 Conflict: duplicate bookmark (same user_name + place_id)
-422 Validation Error: invalid input (FastAPI/Pydantic validation)
+- 404 Not Found: resource does not exist
+- 409 Conflict: duplicate bookmark (same `user_name` + `place_id`)
+- 422 Validation Error: invalid input (FastAPI/Pydantic validation)
+- 400 Bad Request: invalid trip date range (`end_date` earlier than `start_date`)
 
 ## Notes
-This project uses a lightweight user_name field to simulate user interactions without implementing authentication.
-400 Bad Request: invalid trip date range (end_date earlier than start_date)
+- This project uses a lightweight `user_name` field to simulate user interactions without implementing authentication.
+
+## Notes
+- This project uses a lightweight `user_name` field to simulate user interactions without implementing authentication.
+
 
 Notes
 This project uses a lightweight user_name field to simulate user interactions without implementing authentication.
