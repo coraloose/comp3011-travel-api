@@ -42,6 +42,9 @@ python -m uvicorn main:app --reload
 - Swagger UI: http://127.0.0.1:8000/docs  
 - Health check: http://127.0.0.1:8000/health
 
+## API Documentation (PDF)
+- [COMP3011 API Documentation](API_Documentation.pdf)
+
 ## Database
 - Database: SQLite
 - File: `travel.db` (created/updated automatically when the server starts)
