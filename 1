@@ -1,15 +1,19 @@
-[sc22hl@feng-linux-07 55]$ make
-On a School machine, first load a suitable CUDA module; see Lecture 14 for details. If it does not work, you can try another machine in Bragg 2.05, or the GPU-enabled remote machine feng-linux.leeds.ac.uk/gpu (don't forget the 'gpu'!)
+登录后，它应该给你一个浏览器里的远程 Linux/GPU 环境。
+进入你的作业文件夹，比如：
+cd ~/55
+先加载 CUDA module，Lecture 14 第 17 页写的是：
+module load cuda
+
+然后用 nvcc 编译 OpenCL 程序：
+
+make
+
+或者：
 
 nvcc -lOpenCL -o cwk3 cwk3.c
-make: nvcc: No such file or directory
-make: *** [makefile:26: all] Error 127
+运行测试：
+./cwk3 2 4
+./cwk3 16 8
+./cwk3 32 32
 
-ssh feng-linux.leeds.ac.uk/gpu
-
-sc22hl@feng-linux-07 55]$ cd ..
-[sc22hl@feng-linux-07 ~]$ ssh gpu
-ssh: Could not resolve hostname gpu: Name or service not known
-[sc22hl@feng-linux-07 ~]$ ssh feng-linux.leeds.ac.uk/gpu
-ssh: Could not resolve hostname feng-linux.leeds.ac.uk/gpu: Name or service not known
-[sc22hl@feng-linux-07 ~]$ 
+你现在在 feng-linux-07 里 SSH 不进去是正常的，因为教程说的是 browser access，不是 ssh gpu。另外，Lecture 14 也说可以尝试 SSH 到 Bragg 2.05 的具体机器，例如 uol-pc-055424，但主要推荐的是浏览器打开 feng-linux.leeds.ac.uk/gpu。
