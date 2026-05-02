@@ -1,19 +1,15 @@
-登录后，它应该给你一个浏览器里的远程 Linux/GPU 环境。
-进入你的作业文件夹，比如：
-cd ~/55
-先加载 CUDA module，Lecture 14 第 17 页写的是：
-module load cuda
-
-然后用 nvcc 编译 OpenCL 程序：
-
-make
-
-或者：
-
-nvcc -lOpenCL -o cwk3 cwk3.c
-运行测试：
-./cwk3 2 4
-./cwk3 16 8
-./cwk3 32 32
-
-你现在在 feng-linux-07 里 SSH 不进去是正常的，因为教程说的是 browser access，不是 ssh gpu。另外，Lecture 14 也说可以尝试 SSH 到 Bragg 2.05 的具体机器，例如 uol-pc-055424，但主要推荐的是浏览器打开 feng-linux.leeds.ac.uk/gpu。
+In file included from /uollinapps/v2/current/soc/install/cuda/12.6.1/bin/../targets/x86_64-linux/include/CL/cl.h:20,
+                 from helper_cwk.h:15,
+                 from cwk3.c:12:
+/uollinapps/v2/current/soc/install/cuda/12.6.1/bin/../targets/x86_64-linux/include/CL/cl_version.h:22:9: note: ‘#pragma message: cl_version.h: CL_TARGET_OPENCL_VERSION is not defined. Defaulting to 300 (OpenCL 3.0)’
+   22 | #pragma message("cl_version.h: CL_TARGET_OPENCL_VERSION is not defined. Defaulting to 300 (OpenCL 3.0)")
+      |         ^~~~~~~
+cwk3.c: In function ‘main’:
+cwk3.c:32:5: warning: ‘clCreateCommandQueue’ is deprecated [-Wdeprecated-declarations]
+   32 |     cl_command_queue queue = clCreateCommandQueue( context, device, 0, &status );
+      |     ^~~~~~~~~~~~~~~~
+In file included from helper_cwk.h:15,
+                 from cwk3.c:12:
+/uollinapps/v2/current/soc/install/cuda/12.6.1/bin/../targets/x86_64-linux/include/CL/cl.h:1914:1: note: declared here
+ 1914 | clCreateCommandQueue(cl_context                     context,
+      | ^~~~~~~~~~~~~~~~~~~~
